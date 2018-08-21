@@ -9,7 +9,7 @@ This is the academic version of Sparrow that is different from the [commercial v
 ## Build Status
 Linux|MAC OSX
 -----|-------
-[![Build Status](https://travis-ci.org/ropas/sparrow.svg?branch=master)](https://travis-ci.org/ropas/sparrow)|[![Build Status](https://travis-ci.org/ropas/sparrow.svg?branch=master)](https://travis-ci.org/ropas/sparrow)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/ropas/sparrow?branch=master&svg=true)](https://ci.appveyor.com/api/projects/status/github/ropas/sparrow)|[![Build Status](https://travis-ci.org/ropas/sparrow.svg?branch=master)](https://travis-ci.org/ropas/sparrow)
  
 ## Sparrow Dependencies
 To build Sparrow, you need
@@ -44,12 +44,7 @@ Optionally, you need the following prerequisites to use machine-learning feature
 [fasoo]: http://en.fasoo.com/sparrow
 
 ## Install Sparrow with OPAM
-The easiest way to install Sparrow is to use [OPAM][]. For example:
-```sh
-opam depext --install sparrow
-```
-
-## Install Sparrow from source with OPAM
+The easiest way to install Sparrow is to use [OPAM][].
 Once you have cloned the source codes, run the build script to install the prerequisites and Sparrow:
 ```sh
 $ git clone git@github.com:ropas/sparrow.git

@@ -30,6 +30,10 @@ val oct : bool ref
 val pack_impact : bool ref
 val pack_manual : bool ref
 
+(** {2 Taint Analysis } *)
+
+val taint : bool ref
+
 (** {2 Unsoundness } *)
 
 val unsound_loop : string BatSet.t ref
@@ -39,6 +43,7 @@ val extract_lib_feat : bool ref
 val top_location : bool ref
 val bugfinder :  int ref
 val unsound_recursion : bool ref
+val unsound_alloc : bool ref
 
 (** {2 Main Analysis } *)
 
@@ -52,6 +57,12 @@ val bo : bool ref
 val nd : bool ref
 val dz : bool ref
 val show_all_query : bool ref
+val filter_extern : bool ref
+val filter_global : bool ref
+val filter_lib : bool ref
+val filter_complex_exp : bool ref
+val filter_rec : bool ref
+val filter_allocsite : string BatSet.t ref
 
 (** {2 Pretty Printer & Debugging } *)
 

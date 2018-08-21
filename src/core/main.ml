@@ -13,11 +13,16 @@ open Cil
 open Global
 open Vocab
 
+(* transformation based on syntactic heuristics *)
+let transform_simple file =
+  opt !Options.unsound_alloc UnsoundAlloc.transform file
+
+(* transformation based on semantic heuristics *)
 let transform : Global.t -> Global.t
 = fun global ->
-  let loop_transformed = UnsoundLoop.dissolve global in
+  let loop_transformed = UnsoundLoop.transform global in
   let inlined = Frontend.inline global in
-  if loop_transformed || inlined then   (* something transformed *)
+  if not !Options.il && (loop_transformed || inlined) then   (* something transformed *)
     Frontend.makeCFGinfo global.file    (* NOTE: CFG must be re-computed after transformation *)
     |> StepManager.stepf true "Translation to graphs (after inline)" Global.init
     |> StepManager.stepf true "Pre-analysis (after inline)" PreAnalysis.perform
@@ -26,6 +31,7 @@ let transform : Global.t -> Global.t
 let init_analysis : Cil.file -> Global.t
 = fun file ->
   file
+  |> transform_simple
   |> StepManager.stepf true "Translation to graphs" Global.init
   |> StepManager.stepf true "Pre-analysis" PreAnalysis.perform
   |> transform
@@ -38,9 +44,12 @@ let print_pgm_info : Global.t -> Global.t
   prerr_endline ("#Nodes : " ^ string_of_int (List.length nodes));
   global
 
-let print_il : Global.t -> Global.t
-= fun global ->
-  Cil.dumpFile !Cil.printerForMaincil stdout "" global.file;
+let print_il file =
+  (if !Options.inline = [] && BatSet.is_empty !Options.unsound_loop then
+    Cil.dumpFile !Cil.printerForMaincil stdout "" (transform_simple file)
+  else
+    let global = init_analysis file in
+    Cil.dumpFile !Cil.printerForMaincil stdout "" global.file);
   exit 0
 
 let print_cfg : Global.t -> Global.t
@@ -55,10 +64,13 @@ let finish t0 () =
   Profiler.report stdout;
   my_prerr_endline (string_of_float (Sys.time () -. t0))
 
-let octagon_analysis : Global.t * ItvAnalysis.Table.t * ItvAnalysis.Table.t * Report.query list -> Report.query list
-= fun (global,itvinputof,_,_) ->
+let octagon_analysis (global,itvinputof,_,_) =
   StepManager.stepf true "Oct Sparse Analysis" OctAnalysis.do_analysis (global,itvinputof)
-  |> (fun (_,_,_,alarm) -> alarm)
+  |> (fun (global,_,_,alarm) -> (global, alarm))
+
+let taint_analysis (global,itvinputof,_,_) =
+  StepManager.stepf true "Taint Sparse Analysis" TaintAnalysis.do_analysis (global,itvinputof)
+  |> (fun (global,_,_,alarm) -> (global, alarm))
 
 let extract_feature : Global.t -> Global.t
 = fun global ->
@@ -88,14 +100,15 @@ let main () =
   try
     StepManager.stepf true "Front-end" Frontend.parse ()
     |> Frontend.makeCFGinfo
+    |> opt !Options.il print_il
     |> init_analysis
     |> print_pgm_info
-    |> opt !Options.il print_il
     |> opt !Options.cfg print_cfg
     |> extract_feature
     |> StepManager.stepf true "Itv Sparse Analysis" ItvAnalysis.do_analysis
-    |> cond !Options.oct octagon_analysis (fun (_,_,_,alarm) -> alarm)
-    |> Report.print
+    |> case [ (!Options.oct, octagon_analysis);
+              (!Options.taint, taint_analysis) ] (fun (global,_,_,alarm) -> (global, alarm))
+    |> (fun (global, alarm) -> Report.print global alarm)
     |> finish t0
   with exc ->
     prerr_endline (Printexc.to_string exc);

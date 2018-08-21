@@ -8,6 +8,8 @@
 (* See the LICENSE file for details.                                   *)
 (*                                                                     *)
 (***********************************************************************)
+open Vocab
+
 (* ****************** *
  * Widening threshold *
  * ****************** *)
@@ -289,6 +291,8 @@ let is_finite (x:t) : bool =
     match x with
     | V (Int _, Int _) -> true
     | _ -> false
+
+let is_infinite x = not (is_finite x)
 
 let is_negative (x:t) : bool =
   if is_bot x then false else

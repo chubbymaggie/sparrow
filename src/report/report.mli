@@ -16,6 +16,7 @@ type query = {
   exp : AlarmExp.t;
   loc : Cil.location;
   allocsite : BasicDom.Allocsite.t option;
+  src : (InterCfg.node * Cil.location) option;
   status : status;
   desc : string
 }
@@ -25,4 +26,4 @@ val string_of_alarminfo : Itv.t -> Itv.t -> string
 val string_of_query : query -> string
 val partition : query list -> (part_unit, query list) BatMap.t
 val get : query list -> status -> query list
-val print : query list -> unit
+val print : Global.t -> query list -> unit
